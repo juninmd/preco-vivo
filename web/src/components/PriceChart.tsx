@@ -9,6 +9,17 @@ export function PriceChart({ points }: { points: PricePoint[] }) {
   const first = points[0];
   const last = points[points.length - 1];
   if (!first || !last) return <p className="muted">Sem compras registradas.</p>;
+  if (points.length === 1) {
+    return (
+      <p className="card muted">
+        Primeira compra registrada:{" "}
+        <strong>
+          {money(first.unitPriceCents)}/{first.unit}
+        </strong>{" "}
+        em {day(first.issuedAt)} no {first.storeName}. A linha de preço aparece a partir da segunda nota.
+      </p>
+    );
+  }
 
   const series = points.map((p) => ({ ...p, t: new Date(p.issuedAt).getTime() }));
   const times = series.map((p) => p.t);
@@ -44,7 +55,7 @@ export function PriceChart({ points }: { points: PricePoint[] }) {
         </text>
         <path className="line" d={path} />
         {series.map((p) => (
-          <circle key={p.itemId} className="dot" cx={x(p.t)} cy={y(p.unitPriceCents)} r={5}>
+          <circle key={`${p.receiptId}-${p.unit}`} className="dot" cx={x(p.t)} cy={y(p.unitPriceCents)} r={5}>
             <title>{`${day(p.issuedAt)} · ${p.storeName} · ${money(p.unitPriceCents)}/${p.unit}`}</title>
           </circle>
         ))}

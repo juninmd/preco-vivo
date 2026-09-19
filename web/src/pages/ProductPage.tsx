@@ -9,6 +9,7 @@ export function ProductPage({ id }: { id: number }) {
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState("");
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [chosenUnit, setChosenUnit] = useState<string | null>(null);
 
   if (loading && !data) return <p className="muted">Carregando…</p>;
   if (error || !data)
@@ -17,6 +18,10 @@ export function ProductPage({ id }: { id: number }) {
         {error ?? "Produto não encontrado."}
       </p>
     );
+
+  const units = [...new Set(data.points.map((p) => p.unit))];
+  const unit = chosenUnit && units.includes(chosenUnit) ? chosenUnit : data.points.at(-1)?.unit;
+  const chartPoints = data.points.filter((p) => p.unit === unit);
 
   const save = async (e: FormEvent) => {
     e.preventDefault();
@@ -68,7 +73,19 @@ export function ProductPage({ id }: { id: number }) {
         </div>
       )}
 
-      <PriceChart points={data.points} />
+      {units.length > 1 && (
+        <fieldset className="segmented">
+          <legend className="muted small">
+            Vendido em unidades diferentes. Preços só são comparados na mesma unidade:
+          </legend>
+          {units.map((u) => (
+            <button key={u} type="button" aria-pressed={u === unit} onClick={() => setChosenUnit(u)}>
+              {u}
+            </button>
+          ))}
+        </fieldset>
+      )}
+      <PriceChart points={chartPoints} />
 
       <h2>Compras</h2>
       <table>
@@ -83,7 +100,7 @@ export function ProductPage({ id }: { id: number }) {
         </thead>
         <tbody>
           {[...data.points].reverse().map((p) => (
-            <tr key={p.itemId}>
+            <tr key={`${p.receiptId}-${p.unit}`}>
               <td>{day(p.issuedAt)}</td>
               <td>{p.storeName}</td>
               <td className="num">

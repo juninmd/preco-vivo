@@ -12,6 +12,7 @@ export type ProductStats = {
   id: number;
   name: string;
   unit: string;
+  units: number;
   purchases: number;
   minCents: number;
   maxCents: number;
@@ -20,7 +21,7 @@ export type ProductStats = {
   lastSeen: string;
 };
 export type PricePoint = {
-  itemId: number;
+  receiptId: number;
   issuedAt: string;
   unitPriceCents: number;
   qty: number;

@@ -30,7 +30,7 @@
 ## ✨ O que faz
 
 - 📷 **Lê o QR code da NFC-e** pela câmera, ou pela URL colada, e importa todos os itens do cupom.
-- 📈 **Linha de preço por produto**, com mínimo, máximo e variação desde a primeira compra.
+- 📈 **Linha de preço por produto**, com mínimo, máximo e variação desde a primeira compra. Um ponto por nota, e unidades diferentes (unidade × caixa) nunca se misturam.
 - 🔎 **Ranking de "maior aumento"** para ver onde a inflação da sua cesta está batendo.
 - 🧩 **Junta o mesmo produto entre mercados** (`CAFE 3 COR VAC 500G` ≈ `CAFE 3 CORAC 500 GR`): sugestão automática que você confirma, com IA opcional para filtrar os pares.
 - 🔁 **Idempotente**: escanear a mesma nota de novo não duplica nada.
@@ -126,7 +126,7 @@ Todas as rotas `/api/*` exigem `Authorization: Bearer <API_TOKEN>`. As listas s�
 ## 🧪 Qualidade
 
 ```bash
-bun run test        # 36 testes: parser, SSRF, idempotência, concorrência, fusão
+bun run test        # 40 testes: parser, SSRF, idempotência, concorrência, fusão, linhas de preço
 bun run typecheck   # tsc do servidor + build do web
 bun run lint        # Biome (lint + format)
 ```
@@ -136,9 +136,9 @@ bun run lint        # Biome (lint + format)
 - [ ] Só **SP** por enquanto. O layout é compartilhado por outros estados, então dá para expandir a allowlist com homologação.
 - [ ] Consultar **só pela chave** exige captcha na SEFAZ-SP, então a entrada é o QR ou a URL dele.
 - [ ] A consulta pública **não traz EAN**; o agrupamento usa o código interno de cada mercado.
-- [ ] Separar a linha de preço quando o mesmo código é vendido em unidades diferentes (ex.: `PC` × caixa `DP`).
-- [ ] Um ponto por nota quando o mesmo produto aparece em várias linhas do cupom.
-- [ ] Esconder o gráfico quando só existe uma compra.
+- [x] Separar a linha de preço quando o mesmo código é vendido em unidades diferentes (ex.: `PC` × caixa `DP`).
+- [x] Um ponto por nota quando o mesmo produto aparece em várias linhas do cupom (média ponderada pela quantidade).
+- [x] Esconder o gráfico quando só existe uma compra.
 
 ## 📁 Estrutura
 

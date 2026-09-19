@@ -6,7 +6,9 @@ export type ProductSort = "recent" | "variation" | "name";
 export type ProductStats = {
   id: number;
   name: string;
+  /** Unit of the latest purchase (larger quantity on ties); first/last/min/max only compare prices in this unit. */
   unit: string;
+  units: number;
   purchases: number;
   minCents: number;
   maxCents: number;
@@ -15,8 +17,9 @@ export type ProductStats = {
   lastSeen: string;
 };
 
+/** One point per receipt and unit, priced by the quantity-weighted average of its lines. */
 export type PricePoint = {
-  itemId: number;
+  receiptId: number;
   issuedAt: string;
   unitPriceCents: number;
   qty: number;
@@ -30,20 +33,40 @@ const ORDER: Record<ProductSort, string> = {
   name: "name COLLATE NOCASE ASC, id ASC",
 };
 
+const POINTS = (where = "") => `
+  SELECT a.product_id, i.receipt_id AS receiptId, i.unit, r.issued_at AS issuedAt, s.name AS storeName,
+    CAST(ROUND(SUM(i.qty * i.unit_price_cents) / SUM(i.qty)) AS INTEGER) AS price,
+    SUM(i.qty) AS qty, MIN(i.id) AS firstItem
+  FROM receipt_items i
+  JOIN product_aliases a ON a.id = i.alias_id
+  JOIN receipts r ON r.id = i.receipt_id
+  JOIN stores s ON s.id = r.store_id
+  WHERE i.qty > 0 ${where}
+  GROUP BY a.product_id, i.receipt_id, i.unit`;
+
 const STATS = (order: string) => `
-  WITH pts AS (
-    SELECT a.product_id, r.issued_at, i.unit_price_cents AS price,
-      ROW_NUMBER() OVER (PARTITION BY a.product_id ORDER BY r.issued_at, i.id) AS rn_first,
-      ROW_NUMBER() OVER (PARTITION BY a.product_id ORDER BY r.issued_at DESC, i.id DESC) AS rn_last
-    FROM receipt_items i
-    JOIN product_aliases a ON a.id = i.alias_id
-    JOIN receipts r ON r.id = i.receipt_id
+  WITH pts AS (${POINTS()}),
+  cur AS (
+    SELECT product_id, unit FROM (
+      SELECT product_id, unit,
+        ROW_NUMBER() OVER (PARTITION BY product_id ORDER BY issuedAt DESC, receiptId DESC, qty DESC, unit) AS rn
+      FROM pts
+    ) WHERE rn = 1
+  ),
+  line AS (
+    SELECT pts.*,
+      ROW_NUMBER() OVER (PARTITION BY pts.product_id ORDER BY issuedAt, receiptId) AS rn_first,
+      ROW_NUMBER() OVER (PARTITION BY pts.product_id ORDER BY issuedAt DESC, receiptId DESC) AS rn_last
+    FROM pts JOIN cur ON cur.product_id = pts.product_id AND cur.unit = pts.unit
   )
-  SELECT p.id, p.name, p.unit, COUNT(*) AS purchases, MIN(price) AS minCents, MAX(price) AS maxCents,
+  SELECT p.id, p.name, cur.unit, COUNT(*) AS purchases, MIN(price) AS minCents, MAX(price) AS maxCents,
     MAX(CASE WHEN rn_first = 1 THEN price END) AS firstCents,
     MAX(CASE WHEN rn_last = 1 THEN price END) AS lastCents,
-    MAX(issued_at) AS lastSeen
-  FROM products p JOIN pts ON pts.product_id = p.id
+    MAX(issuedAt) AS lastSeen,
+    (SELECT COUNT(DISTINCT x.unit) FROM pts x WHERE x.product_id = p.id) AS units
+  FROM products p
+  JOIN line ON line.product_id = p.id
+  JOIN cur ON cur.product_id = p.id
   WHERE ?1 IS NULL OR p.name LIKE ?1 ESCAPE '\\'
      OR EXISTS (SELECT 1 FROM product_aliases x WHERE x.product_id = p.id AND x.description LIKE ?1 ESCAPE '\\')
   GROUP BY p.id
@@ -59,12 +82,8 @@ export function createProductRepo(db: Database) {
   >;
   const one = db.query("SELECT id, name, unit FROM products WHERE id = ?");
   const series = db.query(
-    `SELECT i.id AS itemId, r.issued_at AS issuedAt, i.unit_price_cents AS unitPriceCents, i.qty, i.unit, s.name AS storeName
-     FROM receipt_items i
-     JOIN product_aliases a ON a.id = i.alias_id
-     JOIN receipts r ON r.id = i.receipt_id
-     JOIN stores s ON s.id = r.store_id
-     WHERE a.product_id = ? ORDER BY r.issued_at, i.id LIMIT 1000`,
+    `SELECT receiptId, issuedAt, price AS unitPriceCents, qty, unit, storeName
+     FROM (${POINTS("AND a.product_id = ?1")}) ORDER BY issuedAt, receiptId, firstItem LIMIT 1000`,
   );
   const aliases = db.query(
     `SELECT a.description, a.store_code AS storeCode, s.name AS storeName

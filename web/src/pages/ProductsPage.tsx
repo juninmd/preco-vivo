@@ -79,6 +79,7 @@ export function ProductsPage() {
                   <span className="name">{p.name}</span>
                   <span className="muted small">
                     {p.purchases}× · última {day(p.lastSeen)}
+                    {p.units > 1 && ` · ${p.units} unidades`}
                   </span>
                 </span>
                 <span className="price">

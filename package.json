@@ -1,0 +1,19 @@
+{
+  "name": "preco-vivo",
+  "private": true,
+  "workspaces": [
+    "server",
+    "web"
+  ],
+  "scripts": {
+    "dev:server": "bun run --cwd server dev",
+    "dev:web": "bun run --cwd web dev",
+    "test": "bun run --cwd server test",
+    "typecheck": "bun run --cwd server typecheck && bun run --cwd web build",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write ."
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.14"
+  }
+}

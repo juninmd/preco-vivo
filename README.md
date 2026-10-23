@@ -56,6 +56,11 @@ flowchart LR
 - **Mesmo código no mesmo mercado = mesmo produto.** Entre mercados, os candidatos saem de tokens do nome, abreviações (`CAF` ≈ `CAFE`) e tamanho da embalagem normalizado (`1L` = `1000ML`). Números de modelo diferentes nunca viram par.
 - **Falha alto, nunca pela metade**: se a SEFAZ mudar o layout ou devolver uma página de erro, a importação dá 422 e nada é gravado.
 
+## 📋 Requisitos
+
+- [Bun](https://bun.sh) 1.3 (o `Dockerfile` usa `oven/bun:1.3.13`). Não há Node nem npm no fluxo.
+- Docker, só se for usar a imagem.
+
 ## 🚀 Começando
 
 ```bash
@@ -130,6 +135,18 @@ bun run test        # 40 testes: parser, SSRF, idempotência, concorrência, fus
 bun run typecheck   # tsc do servidor + build do web
 bun run lint        # Biome (lint + format)
 ```
+
+## 🚦 Gates de CI
+
+Os workflows em `.github/workflows/` chamam os reusables de `juninmd/base-actions`:
+
+| Workflow | Quando roda | O que checa |
+|---|---|---|
+| `validate.yml` | PR e push na `main` | Varredura de segredos, `bun install --frozen-lockfile`, `bun run lint` (informativo, não reprova), `bun run test` e auditoria de dependências (reusable `reusable-validate.yml`) |
+| `security.yml` | push na `main`, semanal e manual | Varredura de segurança (reusable `reusable-security-scan.yml`) |
+| `docker.yml` | push na `main` e manual | Build e push da imagem Docker (reusable `reusable-docker-build.yml`) |
+
+O CI não roda `bun run typecheck` (o raiz não tem script `build`). Rode `bun run lint`, `bun run typecheck` e `bun run test` localmente antes de abrir PR.
 
 ## 🗺️ Limitações e próximos passos
 

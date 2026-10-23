@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="web/public/icon-192.png" width="88" alt="" />
+<img src="web/public/icon-192.png" width="88" alt="Ícone do Preço Vivo" />
 
 # Preço Vivo
 
@@ -10,20 +10,14 @@
 [![Hono](https://img.shields.io/badge/Hono-4-E36002?logo=hono&logoColor=fff)](https://hono.dev)
 [![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=000)](https://react.dev)
 [![Vite](https://img.shields.io/badge/Vite-8-646CFF?logo=vite&logoColor=fff)](https://vite.dev)
-[![SQLite](https://img.shields.io/badge/SQLite-bun%3Asqlite-003B57?logo=sqlite&logoColor=fff)](https://bun.sh/docs/api/sqlite)
-[![PWA](https://img.shields.io/badge/PWA-instalável-5A0FC8?logo=pwa&logoColor=fff)](#-no-celular-pwa)
-[![Biome](https://img.shields.io/badge/lint-Biome-60A5FA?logo=biome&logoColor=fff)](https://biomejs.dev)
+[![Build](https://img.shields.io/github/actions/workflow/status/juninmd/preco-vivo/validate.yml?branch=main&label=build)](https://github.com/juninmd/preco-vivo/actions/workflows/validate.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-0f766e)](LICENSE)
 
-</div>
+<br/>
 
-<p align="center">
-  <img src="docs/screenshots/scan.png" width="19%" alt="Tela de leitura do QR code" />
-  <img src="docs/screenshots/products.png" width="19%" alt="Lista de produtos com variação de preço" />
-  <img src="docs/screenshots/product.png" width="19%" alt="Gráfico da evolução de preço de um produto" />
-  <img src="docs/screenshots/product-dark.png" width="19%" alt="Gráfico em modo escuro" />
-  <img src="docs/screenshots/merge.png" width="19%" alt="Sugestão para juntar o mesmo produto de mercados diferentes" />
-</p>
+<img src=".github/assets/screenshots/home.png" width="260" alt="Tela Produtos com três itens de cupom de exemplo e a variação de preço do café" />
+
+</div>
 
 ---
 
@@ -38,19 +32,27 @@
 
 > Homologado contra a SEFAZ-SP real com **14 notas de 2020 a 2026**: supermercados, atacarejo, postos, papelaria e fast-food, nos formatos de QR v2 e v3.
 
+## 📸 Telas
+
+| | |
+|:---:|:---:|
+| <img src="docs/screenshots/scan.png" width="300" alt="Tela de leitura do QR code" /><br/>**Ler nota**<br/>Escaneie o QR code ou cole a URL do cupom. | <img src="docs/screenshots/products.png" width="300" alt="Lista de produtos com variação de preço" /><br/>**Produtos**<br/>Último preço e variação desde a primeira compra. |
+| <img src="docs/screenshots/product.png" width="300" alt="Gráfico da evolução de preço de um produto" /><br/>**Gráfico do produto**<br/>Um ponto por nota, com mínimo e máximo. | <img src="docs/screenshots/product-dark.png" width="300" alt="Gráfico em modo escuro" /><br/>**Modo escuro**<br/>O mesmo gráfico com tema escuro. |
+| <img src="docs/screenshots/merge.png" width="300" alt="Sugestão para juntar o mesmo produto de mercados diferentes" /><br/>**Juntar produtos**<br/>Confirme quando nomes de mercados diferentes são o mesmo produto. | |
+
 ## 🧠 Como funciona
 
 ```mermaid
 flowchart LR
-    QR["📷 QR da NFC-e"] --> V{"URL da SEFAZ-SP?<br/>chave válida (mod 11)?"}
+    QR["📷 QR da NFC-e"] --> V{"URL da SEFAZ-SP?<br/>chave válida (mod 11)?<br/>nfce/url.ts · access-key.ts"}
     V -- não --> X["422: recusado<br/>(sem requisição)"]
-    V -- sim --> F["Consulta pública<br/>SEFAZ-SP"]
-    F --> P["Parser HTMLRewriter<br/>itens · totais · emitente"]
-    P --> C{"soma dos itens = total?<br/>nº de itens confere?"}
+    V -- sim --> F["Consulta pública SEFAZ-SP<br/>nfce/fetch.ts"]
+    F --> P["Parser HTMLRewriter<br/>itens · totais · emitente<br/>nfce/parse.ts"]
+    P --> C{"soma dos itens = total?<br/>nº de itens confere?<br/>nfce/parse.ts"}
     C -- não --> E["422: nota não gravada"]
-    C -- sim --> DB[("SQLite<br/>lojas · notas · produtos")]
-    DB --> UI["📈 Linha de preço<br/>por produto"]
-    DB --> S["🧩 Sugestões de fusão<br/>(+ IA opcional)"]
+    C -- sim --> DB[("SQLite<br/>lojas · notas · produtos<br/>db/migrate.ts")]
+    DB --> UI["📈 Linha de preço<br/>por produto<br/>web/src/pages/ProductPage.tsx"]
+    DB --> S["🧩 Sugestões de fusão<br/>(+ IA opcional)<br/>suggestions/service.ts · judge.ts"]
 ```
 
 - **Mesmo código no mesmo mercado = mesmo produto.** Entre mercados, os candidatos saem de tokens do nome, abreviações (`CAF` ≈ `CAFE`) e tamanho da embalagem normalizado (`1L` = `1000ML`). Números de modelo diferentes nunca viram par.
@@ -75,14 +77,16 @@ Abra o app, vá em **Config** e cole o `API_TOKEN`. Endereço vazio significa o 
 <details>
 <summary><b>Variáveis de ambiente</b></summary>
 
-| Variável | Padrão | Para quê |
-|---|---|---|
-| `API_TOKEN` | obrigatório | Token Bearer exigido em `/api/*` (mín. 24 caracteres) |
-| `PORT` | `3000` | Porta HTTP |
-| `DB_PATH` | `data/preco-vivo.db` | Arquivo SQLite (modo WAL) |
-| `CORS_ORIGINS` | `http://localhost:5173,…` | Origens liberadas para chamar a API |
-| `WEB_DIST` | vazio | Pasta do build do web para servir junto |
-| `LLM_BASE_URL` / `LLM_API_KEY` / `LLM_MODEL` | vazio | Gateway compatível com OpenAI (ex.: LiteLLM) para filtrar sugestões |
+| Variável | Padrão | Para quê | Exemplo |
+|---|---|---|---|
+| `API_TOKEN` | obrigatório | Token Bearer exigido em `/api/*` (mín. 24 caracteres) | `troque-por-um-segredo-com-24-caracteres-ou-mais` |
+| `PORT` | `3000` | Porta HTTP | `8080` |
+| `DB_PATH` | `data/preco-vivo.db` | Arquivo SQLite (modo WAL) | `/data/preco-vivo.db` |
+| `CORS_ORIGINS` | `http://localhost:5173,https://localhost,capacitor://localhost` | Origens liberadas para chamar a API | `https://app.exemplo.com` |
+| `WEB_DIST` | vazio | Pasta do build do web para servir junto | `web/dist` |
+| `LLM_BASE_URL` | vazio | Gateway compatível com OpenAI (ex.: LiteLLM) para filtrar sugestões; precisa de `LLM_API_KEY` também | `https://llm.exemplo.com/v1` |
+| `LLM_API_KEY` | vazio | Chave do gateway acima | `<sua-chave>` |
+| `LLM_MODEL` | `cloud/llama-8b` | Modelo pedido ao gateway | `cloud/llama-8b` |
 
 </details>
 
@@ -97,7 +101,10 @@ Imagem de ~70 MB, roda como usuário não-root, tem `HEALTHCHECK` em `GET /healt
 
 ## 📱 No celular (PWA)
 
-Publique atrás de **HTTPS**, porque a câmera só funciona em contexto seguro. Depois:
+> [!NOTE]
+> Publique atrás de **HTTPS**: a câmera só funciona em contexto seguro.
+
+Para instalar:
 
 - **Android/Chrome**: menu → *Instalar app*
 - **iOS/Safari**: Compartilhar → *Adicionar à Tela de Início*
@@ -134,6 +141,7 @@ Todas as rotas `/api/*` exigem `Authorization: Bearer <API_TOKEN>`. As listas s�
 bun run test        # 40 testes: parser, SSRF, idempotência, concorrência, fusão, linhas de preço
 bun run typecheck   # tsc do servidor + build do web
 bun run lint        # Biome (lint + format)
+bun run lint:fix    # corrige o que o Biome aponta
 ```
 
 ## 🚦 Gates de CI
@@ -147,6 +155,12 @@ Os workflows em `.github/workflows/` chamam os reusables de `juninmd/base-action
 | `docker.yml` | push na `main` e manual | Build e push da imagem Docker (reusable `reusable-docker-build.yml`) |
 
 O CI não roda `bun run typecheck` (o raiz não tem script `build`). Rode `bun run lint`, `bun run typecheck` e `bun run test` localmente antes de abrir PR.
+
+## 🤝 Contribuir
+
+- Commits no padrão [Conventional Commits](https://www.conventionalcommits.org) (`feat:`, `fix:`, `docs:`, `ci:`), como no histórico.
+- Antes de abrir PR, rode `bun run lint`, `bun run typecheck` e `bun run test`.
+- Regras de arquitetura, comandos e o que não fazer estão em [AGENTS.md](AGENTS.md).
 
 ## 🗺️ Limitações e próximos passos
 

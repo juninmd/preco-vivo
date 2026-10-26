@@ -15,10 +15,15 @@ export function ProductsPage() {
   const [extra, setExtra] = useState<ProductStats[]>([]);
   const [more, setMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [moreError, setMoreError] = useState<string | null>(null);
   const generation = useRef(0);
+  const busy = useRef(false);
   const first = useAsync(
     useCallback(async () => {
       generation.current++;
+      busy.current = false;
+      setLoadingMore(false);
+      setMoreError(null);
       setExtra([]);
       const r = await api.products(q.trim(), sort, 0);
       setMore(r.items.length === 30);
@@ -28,15 +33,24 @@ export function ProductsPage() {
 
   const items = [...(first.data ?? []), ...extra];
   const loadMore = async () => {
+    if (busy.current) return;
     const gen = generation.current;
+    busy.current = true;
     setLoadingMore(true);
+    setMoreError(null);
     try {
       const r = await api.products(q.trim(), sort, items.length);
       if (gen !== generation.current) return;
-      setExtra((e) => [...e, ...r.items]);
+      const seen = new Set(items.map((i) => i.id));
+      setExtra((e) => [...e, ...r.items.filter((i) => !seen.has(i.id))]);
       setMore(r.items.length === 30);
+    } catch (e) {
+      if (gen === generation.current) setMoreError(e instanceof Error ? e.message : "Falha ao carregar mais produtos.");
     } finally {
-      setLoadingMore(false);
+      if (gen === generation.current) {
+        busy.current = false;
+        setLoadingMore(false);
+      }
     }
   };
 
@@ -94,6 +108,11 @@ export function ProductsPage() {
           );
         })}
       </ul>
+      {moreError && (
+        <p role="alert" className="error">
+          {moreError}
+        </p>
+      )}
       {more && items.length > 0 && (
         <button type="button" className="secondary" disabled={loadingMore} onClick={() => void loadMore()}>
           Carregar mais

@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { api, type ReceiptSummary } from "../api";
 import { day, money } from "../format";
 import { useAsync } from "../useAsync";
@@ -13,12 +13,27 @@ export function ReceiptsPage() {
       return r.items;
     }, []),
   );
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [moreError, setMoreError] = useState<string | null>(null);
+  const busy = useRef(false);
   const items = [...(first.data ?? []), ...extra];
 
   const loadMore = async () => {
-    const r = await api.receipts(items.length);
-    setExtra((e) => [...e, ...r.items]);
-    setMore(r.items.length === 30);
+    if (busy.current) return;
+    busy.current = true;
+    setLoadingMore(true);
+    setMoreError(null);
+    try {
+      const r = await api.receipts(items.length);
+      const seen = new Set(items.map((i) => i.id));
+      setExtra((e) => [...e, ...r.items.filter((i) => !seen.has(i.id))]);
+      setMore(r.items.length === 30);
+    } catch (e) {
+      setMoreError(e instanceof Error ? e.message : "Falha ao carregar mais notas.");
+    } finally {
+      busy.current = false;
+      setLoadingMore(false);
+    }
   };
 
   return (
@@ -43,8 +58,13 @@ export function ReceiptsPage() {
           </li>
         ))}
       </ul>
+      {moreError && (
+        <p role="alert" className="error">
+          {moreError}
+        </p>
+      )}
       {more && items.length > 0 && (
-        <button type="button" className="secondary" onClick={() => void loadMore()}>
+        <button type="button" className="secondary" disabled={loadingMore} onClick={() => void loadMore()}>
           Carregar mais
         </button>
       )}

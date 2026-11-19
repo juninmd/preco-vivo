@@ -11,8 +11,11 @@ export function loadConfig(env: Record<string, string | undefined> = Bun.env): C
   const apiToken = env.API_TOKEN ?? "";
   if (apiToken.length < 24) throw new Error("API_TOKEN must be set with at least 24 characters");
   const { LLM_BASE_URL: baseUrl, LLM_API_KEY: apiKey, LLM_MODEL: model } = env;
+  const port = Number(env.PORT || 3000);
+  if (!Number.isInteger(port) || port < 1 || port > 65535)
+    throw new Error("PORT must be an integer between 1 and 65535");
   return {
-    port: Number(env.PORT ?? 3000),
+    port,
     dbPath: env.DB_PATH ?? "data/preco-vivo.db",
     apiToken,
     corsOrigins: (env.CORS_ORIGINS ?? "http://localhost:5173,https://localhost,capacitor://localhost")

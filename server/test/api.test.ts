@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { buildNfceHtml, CAFE, LEITE, makeKey, qrUrl } from "./fixtures/nfce-sp";
-import { setup } from "./helpers";
+import { setup, TOKEN } from "./helpers";
 
 const KEY1 = makeKey({ number: "000000001" });
 const KEY2 = makeKey({ number: "000000002", yymm: "2610" });
@@ -35,6 +35,11 @@ describe("auth", () => {
     const { call } = setup();
     expect((await call("GET", "/api/products", undefined, "")).status).toBe(401);
     expect((await call("GET", "/api/products", undefined, "x".repeat(27))).status).toBe(401);
+  });
+  test("api refuses the token without the Bearer scheme", async () => {
+    const { app } = setup();
+    const res = await app.request("/api/products", { headers: { Authorization: TOKEN } });
+    expect(res.status).toBe(401);
   });
 });
 

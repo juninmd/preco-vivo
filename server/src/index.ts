@@ -19,7 +19,12 @@ const app = createApp({
   webDist: config.webDist,
 });
 
-const server = Bun.serve({ port: config.port, fetch: app.fetch });
+const server = Bun.serve({
+  port: config.port,
+  fetch: app.fetch,
+  // Bodies are tiny JSON (a URL or a short id list); Bun's default is 128 MB.
+  maxRequestBodySize: 64 * 1024,
+});
 console.log(JSON.stringify({ evt: "listening", port: server.port, llm: config.llm?.model ?? null }));
 
 for (const signal of ["SIGINT", "SIGTERM"] as const) {

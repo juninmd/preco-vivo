@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ProductPage } from "./pages/ProductPage";
 import { ProductsPage } from "./pages/ProductsPage";
 import { ReceiptsPage } from "./pages/ReceiptsPage";
@@ -16,8 +16,18 @@ const TABS = [
 
 function useHash() {
   const [hash, setHash] = useState(() => window.location.hash || "#/scan");
+  const prevHash = useRef(hash);
   useEffect(() => {
-    const on = () => setHash(window.location.hash || "#/scan");
+    const on = () => {
+      // The skip link targets #main; keep the current route instead of falling through to the default page.
+      if (window.location.hash === "#main") {
+        history.replaceState(null, "", prevHash.current);
+        document.getElementById("main")?.focus();
+        return;
+      }
+      prevHash.current = window.location.hash || "#/scan";
+      setHash(prevHash.current);
+    };
     window.addEventListener("hashchange", on);
     return () => window.removeEventListener("hashchange", on);
   }, []);
@@ -48,7 +58,7 @@ export default function App() {
       <a className="skip" href="#main">
         Pular para o conteúdo
       </a>
-      <main id="main">
+      <main id="main" tabIndex={-1}>
         <Page hash={hash} />
       </main>
       <nav aria-label="Principal" className="tabs">

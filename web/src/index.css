@@ -39,6 +39,7 @@ body {
   color: var(--text);
 }
 main {
+  outline: none;
   max-width: 720px;
   margin: 0 auto;
   padding: 16px 16px calc(88px + env(safe-area-inset-bottom));

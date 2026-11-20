@@ -44,6 +44,11 @@ export function ReceiptsPage() {
           {first.error}
         </p>
       )}
+      {first.loading && items.length === 0 && (
+        <p className="muted" role="status">
+          Carregando…
+        </p>
+      )}
       {!first.loading && items.length === 0 && !first.error && <p className="muted">Nenhuma nota importada.</p>}
       <ul className="list">
         {items.map((r) => (
@@ -65,7 +70,7 @@ export function ReceiptsPage() {
       )}
       {more && items.length > 0 && (
         <button type="button" className="secondary" disabled={loadingMore} onClick={() => void loadMore()}>
-          Carregar mais
+          {loadingMore ? "Carregando…" : "Carregar mais"}
         </button>
       )}
     </section>

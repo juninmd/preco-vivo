@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { api, type ProductSort, type ProductStats } from "../api";
 import { day, money, percent, trendClass, variation } from "../format";
 import { useAsync } from "../useAsync";
@@ -9,8 +9,16 @@ const SORTS: { value: ProductSort; label: string }[] = [
   { value: "name", label: "Nome" },
 ];
 
+/** Typing pause before the search hits the API: one request per word, not one per keystroke. */
+const SEARCH_DEBOUNCE_MS = 300;
+
 export function ProductsPage() {
   const [q, setQ] = useState("");
+  const [query, setQuery] = useState("");
+  useEffect(() => {
+    const t = setTimeout(() => setQuery(q.trim()), SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(t);
+  }, [q]);
   const [sort, setSort] = useState<ProductSort>("recent");
   const [extra, setExtra] = useState<ProductStats[]>([]);
   const [more, setMore] = useState(true);
@@ -25,10 +33,10 @@ export function ProductsPage() {
       setLoadingMore(false);
       setMoreError(null);
       setExtra([]);
-      const r = await api.products(q.trim(), sort, 0);
+      const r = await api.products(query, sort, 0);
       setMore(r.items.length === 30);
       return r.items;
-    }, [q, sort]),
+    }, [query, sort]),
   );
 
   const items = [...(first.data ?? []), ...extra];
@@ -39,7 +47,7 @@ export function ProductsPage() {
     setLoadingMore(true);
     setMoreError(null);
     try {
-      const r = await api.products(q.trim(), sort, items.length);
+      const r = await api.products(query, sort, items.length);
       if (gen !== generation.current) return;
       const seen = new Set(items.map((i) => i.id));
       setExtra((e) => [...e, ...r.items.filter((i) => !seen.has(i.id))]);
@@ -85,7 +93,9 @@ export function ProductsPage() {
         </p>
       )}
       {!first.loading && items.length === 0 && !first.error && (
-        <p className="muted">Nenhum produto ainda. Leia uma nota em “Ler nota”.</p>
+        <p className="muted">
+          {query ? `Nenhum produto encontrado para “${query}”.` : "Nenhum produto ainda. Leia uma nota em “Ler nota”."}
+        </p>
       )}
 
       <ul className="list">

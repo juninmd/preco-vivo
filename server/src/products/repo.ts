@@ -44,6 +44,25 @@ const POINTS = (where = "") => `
   WHERE i.qty > 0 ${where}
   GROUP BY a.product_id, i.receipt_id, i.unit`;
 
+// SQLite's LIKE folds case only for ASCII and knows nothing about accents: "café" never matched
+// "CAFE PILAO" (receipts are unaccented) and "maçã" never matched "MAÇÃ". Both sides are folded
+// to unaccented text; LIKE then handles the ASCII case.
+const ACCENTS: [string, string][] = [
+  ["a", "áàâãäÁÀÂÃÄ"],
+  ["e", "éèêëÉÈÊË"],
+  ["i", "íìîïÍÌÎÏ"],
+  ["o", "óòôõöÓÒÔÕÖ"],
+  ["u", "úùûüÚÙÛÜ"],
+  ["c", "çÇ"],
+  ["n", "ñÑ"],
+];
+const fold = (expr: string) =>
+  ACCENTS.flatMap(([base, chars]) => [...chars].map((ch) => [ch, base] as const)).reduce(
+    (sql, [ch, base]) => `REPLACE(${sql}, '${ch}', '${base}')`,
+    expr,
+  );
+const unaccent = (q: string) => q.normalize("NFD").replace(/\p{M}/gu, "");
+
 const STATS = (order: string) => `
   WITH pts AS (${POINTS()}),
   cur AS (
@@ -67,8 +86,8 @@ const STATS = (order: string) => `
   FROM products p
   JOIN line ON line.product_id = p.id
   JOIN cur ON cur.product_id = p.id
-  WHERE ?1 IS NULL OR p.name LIKE ?1 ESCAPE '\\'
-     OR EXISTS (SELECT 1 FROM product_aliases x WHERE x.product_id = p.id AND x.description LIKE ?1 ESCAPE '\\')
+  WHERE ?1 IS NULL OR ${fold("p.name")} LIKE ?1 ESCAPE '\\'
+     OR EXISTS (SELECT 1 FROM product_aliases x WHERE x.product_id = p.id AND ${fold("x.description")} LIKE ?1 ESCAPE '\\')
   GROUP BY p.id
   ORDER BY ${order}
   LIMIT ?2 OFFSET ?3`;
@@ -111,7 +130,7 @@ export function createProductRepo(db: Database) {
 
   return {
     list: (q: string | undefined, sort: ProductSort, limit: number, offset: number) =>
-      lists[sort].all(q ? likePattern(q) : null, limit, offset) as ProductStats[],
+      lists[sort].all(q ? likePattern(unaccent(q)) : null, limit, offset) as ProductStats[],
     detail: (id: number) => ({
       ...get(id),
       aliases: aliases.all(id) as { description: string; storeCode: string; storeName: string }[],

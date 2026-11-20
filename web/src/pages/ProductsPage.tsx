@@ -79,6 +79,11 @@ export function ProductsPage() {
           {first.error}
         </p>
       )}
+      {first.loading && items.length === 0 && (
+        <p className="muted" role="status">
+          Carregando…
+        </p>
+      )}
       {!first.loading && items.length === 0 && !first.error && (
         <p className="muted">Nenhum produto ainda. Leia uma nota em “Ler nota”.</p>
       )}
@@ -115,7 +120,7 @@ export function ProductsPage() {
       )}
       {more && items.length > 0 && (
         <button type="button" className="secondary" disabled={loadingMore} onClick={() => void loadMore()}>
-          Carregar mais
+          {loadingMore ? "Carregando…" : "Carregar mais"}
         </button>
       )}
     </section>

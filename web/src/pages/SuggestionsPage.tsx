@@ -44,6 +44,11 @@ export function SuggestionsPage() {
           {error}
         </p>
       )}
+      {loading && !data && (
+        <p className="muted" role="status">
+          Carregando…
+        </p>
+      )}
       {!loading && data?.items.length === 0 && <p className="muted">Nenhuma sugestão pendente.</p>}
       <ul className="list">
         {data?.items.map((s) => (

@@ -102,6 +102,17 @@ describe("price history", () => {
     expect((await call("GET", "/api/products?q=pilao")).body.items).toHaveLength(1);
   });
 
+  test('search ignores accents and case on both sides (the web placeholder suggests "café")', async () => {
+    const { call } = twoWeeksOfShopping();
+    await call("POST", "/api/receipts", { url: qrUrl(KEY1) });
+    expect((await call("GET", `/api/products?q=${encodeURIComponent("café")}`)).body.items).toHaveLength(1);
+    expect((await call("GET", `/api/products?q=${encodeURIComponent("PILÃO")}`)).body.items).toHaveLength(1);
+    const { body } = await call("GET", "/api/products?q=banana");
+    await call("PATCH", `/api/products/${body.items[0].id}`, { name: "Maçã Gala" });
+    expect((await call("GET", "/api/products?q=maca")).body.items).toHaveLength(1);
+    expect((await call("GET", `/api/products?q=${encodeURIComponent("MAÇÃ")}`)).body.items).toHaveLength(1);
+  });
+
   test("list pagination is bounded", async () => {
     const { call } = setup();
     expect((await call("GET", "/api/products?limit=500")).status).toBe(400);

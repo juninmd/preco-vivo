@@ -17,8 +17,8 @@ export function sizeOf(norm: string): string | null {
   const [, amount, unit] = SIZE.exec(norm) ?? [];
   if (!amount || !unit) return null;
   const n = Number(amount.replace(",", "."));
-  if (unit === "KG") return `${n * 1000}G`;
-  if (unit === "L" || unit === "LT") return `${n * 1000}ML`;
+  if (unit === "KG") return `${Math.round(n * 1000)}G`;
+  if (unit === "L" || unit === "LT") return `${Math.round(n * 1000)}ML`;
   return `${n}${unit === "GR" ? "G" : unit}`;
 }
 

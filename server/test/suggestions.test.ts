@@ -19,6 +19,16 @@ describe("candidate generation", () => {
     expect(sizeOf(normalize("LEITE 1L"))).toBe(sizeOf(normalize("LEITE 1000ML")));
     expect(sizeOf(normalize("ARROZ 5KG"))).toBe("5000G");
   });
+  test("decimal sizes do not drift on float math (2,01 L = 2010 ML)", () => {
+    // 2.01 * 1000 === 2009.9999999999998 in IEEE 754
+    expect(sizeOf(normalize("LEITE INTEGRAL 2,01 L"))).toBe("2010ML");
+    expect(sizeOf(normalize("QUEIJO 1,005 KG"))).toBe("1005G");
+    const got = findCandidates([
+      { id: 1, name: "LEITE INTEGRAL 2,01 L", storeIds: [1] },
+      { id: 2, name: "LEITE INTEGRAL 2010 ML", storeIds: [2] },
+    ]);
+    expect(got.map((c) => [c.a, c.b])).toEqual([[1, 2]]);
+  });
   test("different sizes are never paired, same store never paired", () => {
     const got = findCandidates([
       { id: 1, name: "CAFE PILAO 500G", storeIds: [1] },

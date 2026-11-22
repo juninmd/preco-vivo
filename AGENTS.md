@@ -1,31 +1,54 @@
 # AGENTS.md
 
-Preço Vivo: lê o QR da NFC-e (SEFAZ-SP), grava os itens e mostra a linha de preço por produto. Monorepo Bun com dois workspaces.
+Preço Vivo: reads the QR code of an NFC-e (SEFAZ-SP), stores the items, and shows the price line for each product. Bun monorepo with two workspaces.
 
 ## Stack
-- `server/`: Bun + Hono + `bun:sqlite` (TypeScript). Módulos: `nfce/` (url, fetch, parse), `receipts/`, `products/`, `suggestions/`.
-- `web/`: Vite + React 19 PWA (`pages/`, `components/`).
-- Lint e format: Biome (`biome.json`). Gerenciador: Bun (`bun.lock`).
 
-## Comandos (raiz)
-- `bun install`
-- `bun run dev:server` (API em :3000) e `bun run dev:web` (app em :5173)
-- `bun run test` (testes do server, `bun test`)
-- `bun run typecheck` (`tsc --noEmit` do server + `tsc -b && vite build` do web)
-- `bun run lint` (Biome); `bun run lint:fix` para corrigir
+- `server/`: Bun, Hono, `bun:sqlite`, TypeScript. Modules: `nfce/` (url, fetch, parse), `receipts/`, `products/`, `suggestions/`.
+- `web/`: Vite and React 19 PWA (`pages/`, `components/`).
+- Biome for lint and format (`biome.json`). Bun is the package manager (`bun.lock`).
 
-## Configuração
-Copie `.env.example` para `.env`. `API_TOKEN` (mín. 24 caracteres) é obrigatório; o resto tem padrão. Nunca commite `.env` nem valores de token.
+## Commands
 
-## Gates de CI
-`validate.yml` (PR e main: segredos, install frozen, lint informativo, testes, auditoria; NÃO roda typecheck, rode local), `security.yml` (varredura), `docker.yml` (imagem). Todos usam `juninmd/base-actions`.
+```bash
+bun install
+bun run dev:server      # API on :3000
+bun run dev:web         # app on :5173
+bun run test            # server tests (bun test)
+bun run typecheck       # tsc --noEmit for server, then vite build for web
+bun run lint            # biome check .
+bun run lint:fix        # biome check --write .
+```
 
-## Não fazer
-- Não afrouxe a allowlist anti-SSRF (`nfce.fazenda.sp.gov.br`) nem siga redirects na consulta.
-- Não grave nem logue o CPF do consumidor.
-- Não edite `bun.lock` à mão; regenere com `bun install`.
-- Não suprima regra do Biome; corrija.
-- Nota inválida ou inconsistente falha com 422 e não grava nada; mantenha esse comportamento.
+## Structure
+
+- `server/src/nfce/`: URL validation, fetch, and parse of the NFC-e page. `server/src/errors.ts`: error types and HTTP status.
+- `server/src/receipts/`, `products/`, `suggestions/`: domain modules.
+- `server/test/`: fixtures and tests (`fixtures/nfce-sp.ts`).
+- `web/src/pages/`, `web/src/components/`: UI.
+- `docs/screenshots/`: README images.
+
+## Configuration
+
+- Copy `.env.example` to `.env`. `API_TOKEN` is required and must be at least 24 characters. The rest has defaults.
+- Never commit `.env` or any token value.
+
+## CI
+
+- `validate.yml` (PR and main): secrets check, frozen install, lint (informational), tests, audit. It delegates to `juninmd/base-actions`. The owner's note says it does not run typecheck, so run it locally.
+- `security.yml`: scan. `docker.yml`: image build, on push to `main`.
+
+## Gotchas
+
+- Merging to `main` builds and publishes the Docker image (`docker.yml`).
+- An invalid or inconsistent receipt fails with 422 and writes nothing. Keep that behavior.
+
+## Do not
+
+- Do not loosen the anti-SSRF allowlist (`nfce.fazenda.sp.gov.br`), and do not follow redirects on the lookup (`fetch.ts` uses `redirect: "error"`).
+- Do not store or log the consumer's CPF.
+- Do not edit `bun.lock` by hand. Regenerate it with `bun install`.
+- Do not suppress a Biome rule. Fix the code.
 
 <!-- base-actions-main-policy -->
 ## GitHub Actions — padrão obrigatório (@main)

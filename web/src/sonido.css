@@ -1,0 +1,104 @@
+/*
+ * Ponte entre os tokens do Preço Vivo e o Sonido.
+ * Importado depois de @juninmd/sonido/styles.css em main.tsx: os valores
+ * abaixo vencem os temas do pacote e mantêm a paleta, a tipografia e as
+ * formas do app. O data-theme do <html> acompanha o prefers-color-scheme.
+ */
+:root,
+:root[data-theme] {
+  --sn-color-bg: var(--bg);
+  --sn-color-surface: var(--surface);
+  --sn-color-surface-2: var(--surface);
+  --sn-color-surface-hover: color-mix(in srgb, var(--border) 40%, var(--surface));
+  --sn-color-border: var(--border);
+  --sn-color-border-soft: color-mix(in srgb, var(--border) 55%, var(--surface));
+  --sn-color-text: var(--text);
+  --sn-color-text-dim: var(--muted);
+  --sn-color-text-faint: var(--muted);
+
+  --sn-color-accent: var(--accent);
+  --sn-color-accent-2: var(--accent);
+  --sn-color-on-accent: var(--accent-text);
+  --sn-color-success: var(--down);
+  --sn-color-danger: var(--error);
+  --sn-color-info: var(--accent);
+  --sn-gradient: var(--accent);
+  --sn-gradient-soft: color-mix(in srgb, var(--accent) 14%, transparent);
+  --sn-ring: 0 0 0 4px color-mix(in srgb, var(--accent) 28%, transparent);
+
+  --sn-font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --sn-font-display: var(--sn-font);
+  --sn-font-mono: ui-monospace, "Cascadia Mono", Consolas, monospace;
+
+  --sn-text-md: 1rem;
+  --sn-text-sm: 0.875rem;
+
+  --sn-radius-sm: 8px;
+  --sn-radius: 10px;
+  --sn-radius-lg: 12px;
+
+  --sn-shadow-card: 0 1px 2px rgb(0 0 0 / 0.05);
+  --sn-shadow-glow: 0 6px 18px -10px color-mix(in srgb, var(--accent) 55%, transparent);
+  --sn-shadow-lift: 0 10px 24px -16px rgb(0 0 0 / 0.4);
+  --sn-shadow-pop: 0 18px 44px -18px rgb(0 0 0 / 0.35);
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+  --sn-color-warning: #b45309;
+  --sn-color-on-danger: #ffffff;
+  --sn-color-on-tint: #ffffff;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --sn-color-warning: #fbbf24;
+  --sn-color-on-danger: #1a0508;
+  --sn-color-on-tint: #14110a;
+}
+
+/* O h1 do app é maior que o título padrão do PageHeader. */
+.sn-pagehead {
+  margin: 8px 0 12px;
+}
+
+.sn-pagehead__title {
+  font-size: 1.5rem;
+}
+
+/* A busca divide a linha com o select, como antes da migração. */
+.filters > .sn-search {
+  flex: 1;
+  min-width: 0;
+}
+
+.filters > .sn-field {
+  flex: none;
+}
+
+/* O seletor de unidades ganha o respiro que o fieldset tinha. */
+.unit-switch {
+  display: grid;
+  gap: 6px;
+  margin: 12px 0 4px;
+}
+
+/* O trilho do SubTabs precisa contrastar com o cartão nos dois temas. */
+.sn-subtabs {
+  background: color-mix(in srgb, var(--border) 40%, var(--surface));
+}
+
+.sn-subtab[aria-selected="true"] {
+  background: var(--surface);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.18);
+}
+
+:root[data-theme="dark"] .sn-subtab[aria-selected="true"] {
+  background: color-mix(in srgb, var(--border) 85%, var(--surface));
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.4);
+}
+
+/* O input global do app tem padding; o SearchField controla o espaçamento. */
+.sn-search__input {
+  padding: 0;
+}

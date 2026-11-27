@@ -1,3 +1,4 @@
+import { Button, PageHeader, TextField } from "@juninmd/sonido";
 import { type FormEvent, useState } from "react";
 import { api, loadSettings, saveSettings } from "../api";
 
@@ -17,11 +18,11 @@ export function SettingsPage() {
   };
 
   return (
-    <section aria-labelledby="settings-title">
-      <h1 id="settings-title">Configurações</h1>
+    <section>
+      <PageHeader title="Configurações" titleAs="h1" accent />
       <form onSubmit={onSubmit} className="stack">
-        <label htmlFor="base">Endereço do servidor</label>
-        <input
+        <TextField
+          label="Endereço do servidor"
           id="base"
           type="url"
           inputMode="url"
@@ -29,17 +30,15 @@ export function SettingsPage() {
           value={form.baseUrl}
           onChange={(e) => setForm({ ...form, baseUrl: e.target.value })}
         />
-        <label htmlFor="token">Token de acesso</label>
-        <input
+        <TextField
+          label="Token de acesso"
           id="token"
           type="password"
           autoComplete="off"
           value={form.token}
           onChange={(e) => setForm({ ...form, token: e.target.value })}
         />
-        <button type="submit" className="primary">
-          Salvar e testar
-        </button>
+        <Button type="submit">Salvar e testar</Button>
       </form>
       <p aria-live="polite">{status}</p>
       <p className="muted small">No app Android, use o endereço HTTPS do servidor (ex.: o ingress do cluster).</p>

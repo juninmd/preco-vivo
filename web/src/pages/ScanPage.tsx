@@ -1,3 +1,4 @@
+import { Badge, Button, Card, PageHeader, TextField } from "@juninmd/sonido";
 import { type FormEvent, useState } from "react";
 import { api, type ReceiptSummary } from "../api";
 import { QrScanner } from "../components/QrScanner";
@@ -32,26 +33,30 @@ export function ScanPage() {
   };
 
   return (
-    <section aria-labelledby="scan-title">
-      <h1 id="scan-title">Ler nota</h1>
-      <p className="muted">Aponte a câmera para o QR code do cupom (NFC-e de SP).</p>
+    <section>
+      <PageHeader
+        title="Ler nota"
+        titleAs="h1"
+        accent
+        description="Aponte a câmera para o QR code do cupom (NFC-e de SP)."
+      />
 
       {camera ? (
         <>
           <QrScanner onResult={(text) => void submit(text)} />
-          <button type="button" className="secondary" onClick={() => setCamera(false)}>
+          <Button variant="secondary" onClick={() => setCamera(false)}>
             Fechar câmera
-          </button>
+          </Button>
         </>
       ) : (
-        <button type="button" className="primary big" onClick={() => setCamera(true)} disabled={state.kind === "busy"}>
+        <Button size="lg" className="big" onClick={() => setCamera(true)} disabled={state.kind === "busy"}>
           Escanear QR code
-        </button>
+        </Button>
       )}
 
       <form onSubmit={onSubmit} className="stack">
-        <label htmlFor="qr-url">Ou cole a URL do QR code</label>
-        <input
+        <TextField
+          label="Ou cole a URL do QR code"
           id="qr-url"
           type="url"
           inputMode="url"
@@ -60,9 +65,9 @@ export function ScanPage() {
           placeholder="https://www.nfce.fazenda.sp.gov.br/qrcode?p=…"
           autoComplete="off"
         />
-        <button type="submit" className="secondary" disabled={!url.trim() || state.kind === "busy"}>
+        <Button type="submit" variant="secondary" disabled={!url.trim() || state.kind === "busy"}>
           Importar
-        </button>
+        </Button>
       </form>
 
       <div aria-live="polite">
@@ -73,14 +78,18 @@ export function ScanPage() {
           </p>
         )}
         {state.kind === "done" && (
-          <div className="card ok">
-            <strong>{state.created ? "Nota importada" : "Essa nota já estava salva"}</strong>
+          <Card surface="solid" padding="sm" className="card ok">
+            <div>
+              <Badge tone="success" dot>
+                {state.created ? "Nota importada" : "Essa nota já estava salva"}
+              </Badge>
+            </div>
             <p>{state.receipt.storeName}</p>
             <p className="muted">
               {day(state.receipt.issuedAt)} · {state.receipt.itemCount} itens · {money(state.receipt.paidCents)}
             </p>
             <a href="#/products">Ver preços</a>
-          </div>
+          </Card>
         )}
       </div>
     </section>

@@ -1,6 +1,7 @@
+import { Badge, Button, EmptyState, PageHeader, SearchField, Select, Skeleton } from "@juninmd/sonido";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api, type ProductSort, type ProductStats } from "../api";
-import { day, money, percent, trendClass, variation } from "../format";
+import { day, money, percent, variation } from "../format";
 import { useAsync } from "../useAsync";
 
 const SORTS: { value: ProductSort; label: string }[] = [
@@ -11,6 +12,8 @@ const SORTS: { value: ProductSort; label: string }[] = [
 
 /** Typing pause before the search hits the API: one request per word, not one per keystroke. */
 const SEARCH_DEBOUNCE_MS = 300;
+
+const trendTone = (ratio: number) => (ratio > 0.005 ? "danger" : ratio < -0.005 ? "success" : "neutral");
 
 export function ProductsPage() {
   const [q, setQ] = useState("");
@@ -63,23 +66,17 @@ export function ProductsPage() {
   };
 
   return (
-    <section aria-labelledby="products-title">
-      <h1 id="products-title">Produtos</h1>
+    <section>
+      <PageHeader title="Produtos" titleAs="h1" accent />
       <div className="filters">
-        <label className="sr-only" htmlFor="q">
-          Buscar produto
-        </label>
-        <input id="q" type="search" placeholder="Buscar (ex.: café)" value={q} onChange={(e) => setQ(e.target.value)} />
-        <label className="sr-only" htmlFor="sort">
-          Ordenar por
-        </label>
-        <select id="sort" value={sort} onChange={(e) => setSort(e.target.value as ProductSort)}>
-          {SORTS.map((s) => (
-            <option key={s.value} value={s.value}>
-              {s.label}
-            </option>
-          ))}
-        </select>
+        <SearchField label="Buscar produto" placeholder="Buscar (ex.: café)" value={q} onChange={setQ} />
+        <Select
+          label="Ordenar por"
+          hideLabel
+          value={sort}
+          onChange={(value) => setSort(value as ProductSort)}
+          options={SORTS}
+        />
       </div>
 
       {first.error && (
@@ -87,15 +84,12 @@ export function ProductsPage() {
           {first.error}
         </p>
       )}
-      {first.loading && items.length === 0 && (
-        <p className="muted" role="status">
-          Carregando…
-        </p>
-      )}
+      {first.loading && items.length === 0 && <Skeleton label="Carregando produtos…" rows={3} />}
       {!first.loading && items.length === 0 && !first.error && (
-        <p className="muted">
-          {query ? `Nenhum produto encontrado para “${query}”.` : "Nenhum produto ainda. Leia uma nota em “Ler nota”."}
-        </p>
+        <EmptyState
+          title={query ? "Nenhum produto encontrado" : "Nenhum produto ainda"}
+          description={query ? `Nada para “${query}”.` : "Leia uma nota em “Ler nota” para começar."}
+        />
       )}
 
       <ul className="list">
@@ -116,7 +110,7 @@ export function ProductsPage() {
                     {money(p.lastCents)}
                     <span className="muted small">/{p.unit}</span>
                   </span>
-                  {p.purchases > 1 && <span className={`trend ${trendClass(v)}`}>{percent(v)}</span>}
+                  {p.purchases > 1 && <Badge tone={trendTone(v)}>{percent(v)}</Badge>}
                 </span>
               </a>
             </li>
@@ -129,9 +123,9 @@ export function ProductsPage() {
         </p>
       )}
       {more && items.length > 0 && (
-        <button type="button" className="secondary" disabled={loadingMore} onClick={() => void loadMore()}>
+        <Button variant="secondary" loading={loadingMore} onClick={() => void loadMore()}>
           {loadingMore ? "Carregando…" : "Carregar mais"}
-        </button>
+        </Button>
       )}
     </section>
   );

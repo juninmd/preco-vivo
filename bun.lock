@@ -22,6 +22,7 @@
       "name": "web",
       "version": "0.0.0",
       "dependencies": {
+        "@juninmd/sonido": "^2.5.0",
         "barcode-detector": "^3.2.2",
         "react": "^19.2.8",
         "react-dom": "^19.2.8",
@@ -55,6 +56,8 @@
     "@biomejs/cli-win32-arm64": ["@biomejs/cli-win32-arm64@2.5.14", "", { "os": "win32", "cpu": "arm64" }, "sha512-pHgAFffmZtaYoxavEsWEYNvcA7NwOIjLyqw2HXyLbt16xYryX0L4fMV2u0G9ag6LNYPIoqWaWqzUcnc6rLGGXg=="],
 
     "@biomejs/cli-win32-x64": ["@biomejs/cli-win32-x64@2.5.14", "", { "os": "win32", "cpu": "x64" }, "sha512-oJWmBhoHsnhUKIke+0gXDX0mltJrWHA1UyHsrTlXwX0TL64ilVZAo+TYZm97baecV0esBdpzy3k96q+09JaZUQ=="],
+
+    "@juninmd/sonido": ["@juninmd/sonido@2.5.0", "", { "peerDependencies": { "react": ">=18", "react-dom": ">=18" } }, "sha512-BDDPug2RiI+B5Q88lc0Y32phpWnnlixAdso3XydR9qGmONuUZG8a+OzKiqxyZwrgPnOMPY7m+Oi39WycO1xErg=="],
 
     "@oxc-project/types": ["@oxc-project/types@0.150.0", "", {}, "sha512-rDS5/31E9HfPl/CIzGrn0DOlvBbXFseQ5URJ9sYMfstbKLD/c6Gm9vmRzRGDdAXyOIL4zmO37lc9RIwYqVruZw=="],
 

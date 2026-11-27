@@ -1,5 +1,6 @@
+import { Badge, Button, DataTable, PageHeader, Skeleton, SubTabs, TextField } from "@juninmd/sonido";
 import { type FormEvent, useCallback, useState } from "react";
-import { api } from "../api";
+import { api, type PricePoint } from "../api";
 import { PriceChart } from "../components/PriceChart";
 import { day, money } from "../format";
 import { useAsync } from "../useAsync";
@@ -11,7 +12,7 @@ export function ProductPage({ id }: { id: number }) {
   const [saveError, setSaveError] = useState<string | null>(null);
   const [chosenUnit, setChosenUnit] = useState<string | null>(null);
 
-  if (loading && !data) return <p className="muted">Carregando…</p>;
+  if (loading && !data) return <Skeleton label="Carregando produto…" rows={4} />;
   if (error || !data)
     return (
       <p role="alert" className="error">
@@ -34,22 +35,66 @@ export function ProductPage({ id }: { id: number }) {
     }
   };
 
+  const columns = [
+    { key: "date", label: "Data", sort: (p: PricePoint) => p.issuedAt, render: (p: PricePoint) => day(p.issuedAt) },
+    {
+      key: "store",
+      label: "Mercado",
+      sort: (p: PricePoint) => p.storeName,
+      render: (p: PricePoint) => p.storeName,
+    },
+    {
+      key: "price",
+      label: "Preço",
+      align: "end" as const,
+      sort: (p: PricePoint) => p.unitPriceCents,
+      render: (p: PricePoint) => `${money(p.unitPriceCents)}/${p.unit}`,
+    },
+  ];
+
   return (
-    <section aria-labelledby="product-title">
-      <a href="#/products" className="back">
-        ← Produtos
-      </a>
-      {editing ? (
+    <section>
+      <PageHeader
+        title={data.name}
+        titleAs="h1"
+        accent
+        leading={
+          <Button href="#/products" variant="link" size="sm">
+            ← Produtos
+          </Button>
+        }
+        actions={
+          !editing && (
+            <Button
+              variant="link"
+              size="sm"
+              onClick={() => {
+                setName(data.name);
+                setEditing(true);
+              }}
+            >
+              Renomear
+            </Button>
+          )
+        }
+      />
+
+      {editing && (
         <form onSubmit={save} className="stack">
-          <label htmlFor="rename">Nome do produto</label>
-          <input id="rename" value={name} maxLength={120} onChange={(e) => setName(e.target.value)} />
+          <TextField
+            label="Nome do produto"
+            id="rename"
+            value={name}
+            maxLength={120}
+            onChange={(e) => setName(e.target.value)}
+          />
           <div className="actions">
-            <button type="submit" className="primary" disabled={!name.trim()}>
+            <Button type="submit" disabled={!name.trim()}>
               Salvar
-            </button>
-            <button type="button" className="secondary" onClick={() => setEditing(false)}>
+            </Button>
+            <Button variant="secondary" onClick={() => setEditing(false)}>
               Cancelar
-            </button>
+            </Button>
           </div>
           {saveError && (
             <p role="alert" className="error">
@@ -57,65 +102,34 @@ export function ProductPage({ id }: { id: number }) {
             </p>
           )}
         </form>
-      ) : (
-        <div className="title-row">
-          <h1 id="product-title">{data.name}</h1>
-          <button
-            type="button"
-            className="link"
-            onClick={() => {
-              setName(data.name);
-              setEditing(true);
-            }}
-          >
-            Renomear
-          </button>
-        </div>
       )}
 
       {units.length > 1 && (
-        <fieldset className="segmented">
-          <legend className="muted small">
-            Vendido em unidades diferentes. Preços só são comparados na mesma unidade:
-          </legend>
-          {units.map((u) => (
-            <button key={u} type="button" aria-pressed={u === unit} onClick={() => setChosenUnit(u)}>
-              {u}
-            </button>
-          ))}
-        </fieldset>
+        <div className="unit-switch">
+          <p className="muted small">Vendido em unidades diferentes. Preços só são comparados na mesma unidade:</p>
+          <SubTabs
+            label="Unidade de venda"
+            items={units.map((u) => ({ key: u, label: u }))}
+            value={unit ?? units[0]}
+            onChange={setChosenUnit}
+          />
+        </div>
       )}
       <PriceChart points={chartPoints} />
 
       <h2>Compras</h2>
-      <table>
-        <thead>
-          <tr>
-            <th scope="col">Data</th>
-            <th scope="col">Mercado</th>
-            <th scope="col" className="num">
-              Preço
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {[...data.points].reverse().map((p) => (
-            <tr key={`${p.receiptId}-${p.unit}`}>
-              <td>{day(p.issuedAt)}</td>
-              <td>{p.storeName}</td>
-              <td className="num">
-                {money(p.unitPriceCents)}/{p.unit}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <DataTable
+        label={`Compras de ${data.name}`}
+        columns={columns}
+        rows={[...data.points].reverse()}
+        rowKey={(p) => `${p.receiptId}-${p.unit}`}
+      />
 
       <h2>Como aparece nos cupons</h2>
       <ul className="plain">
         {data.aliases.map((a) => (
           <li key={`${a.storeName}-${a.storeCode}`}>
-            {a.description} <span className="muted small">· {a.storeName}</span>
+            {a.description} <Badge tone="neutral">{a.storeName}</Badge>
           </li>
         ))}
       </ul>

@@ -1,3 +1,4 @@
+import { Button, EmptyState, PageHeader, Skeleton } from "@juninmd/sonido";
 import { useCallback, useRef, useState } from "react";
 import { api, type ReceiptSummary } from "../api";
 import { day, money } from "../format";
@@ -37,19 +38,20 @@ export function ReceiptsPage() {
   };
 
   return (
-    <section aria-labelledby="receipts-title">
-      <h1 id="receipts-title">Notas</h1>
+    <section>
+      <PageHeader title="Notas" titleAs="h1" accent />
       {first.error && (
         <p role="alert" className="error">
           {first.error}
         </p>
       )}
-      {first.loading && items.length === 0 && (
-        <p className="muted" role="status">
-          Carregando…
-        </p>
+      {first.loading && items.length === 0 && <Skeleton label="Carregando notas…" rows={3} />}
+      {!first.loading && items.length === 0 && !first.error && (
+        <EmptyState
+          title="Nenhuma nota importada"
+          description="Leia o QR code de um cupom em “Ler nota” para começar."
+        />
       )}
-      {!first.loading && items.length === 0 && !first.error && <p className="muted">Nenhuma nota importada.</p>}
       <ul className="list">
         {items.map((r) => (
           <li key={r.id} className="row">
@@ -69,9 +71,9 @@ export function ReceiptsPage() {
         </p>
       )}
       {more && items.length > 0 && (
-        <button type="button" className="secondary" disabled={loadingMore} onClick={() => void loadMore()}>
+        <Button variant="secondary" loading={loadingMore} onClick={() => void loadMore()}>
           {loadingMore ? "Carregando…" : "Carregar mais"}
-        </button>
+        </Button>
       )}
     </section>
   );

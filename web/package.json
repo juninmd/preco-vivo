@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@juninmd/sonido": "^2.5.0",
     "barcode-detector": "^3.2.2",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
